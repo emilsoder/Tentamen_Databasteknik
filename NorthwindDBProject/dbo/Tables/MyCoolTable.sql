@@ -1,0 +1,5 @@
+﻿CREATE TABLE [dbo].[MyCoolTable]
+(
+	[ID] INT NOT NULL PRIMARY KEY IDENTITY(1,1), 
+    [CoolTitle] NVARCHAR(25) NULL
+)
