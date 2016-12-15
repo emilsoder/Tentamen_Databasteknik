@@ -3,6 +3,7 @@ using System.Linq;
 using System.Data.SqlClient;
 using System.Configuration;
 using Applikation.EFModel;
+using System.Collections.Generic;
 
 namespace Applikation
 {
@@ -12,21 +13,21 @@ namespace Applikation
 
         static void Main(string[] args)
         {
-            Console.WriteLine("--------------\n ProductsByCategoryName");
-            ProductsByCategoryName("Confections");
+            //Console.WriteLine("\n--------------------------------\n****ProductsByCategoryName****\n");
+            //ProductsByCategoryName("Confections");
 
-            Console.WriteLine("--------------\n SalesByTerritory");
-            SalesByTerritory();
+            //Console.WriteLine("\n--------------------------------\n****SalesByTerritory****\n");
+            //SalesByTerritory();
 
-            Console.WriteLine("--------------\n EmployeesPerRegion");
-            EmployeesPerRegion();
+            //Console.WriteLine("\n--------------------------------\n****EmployeesPerRegion****\n");
+            //EmployeesPerRegion();
 
-            Console.WriteLine("--------------\n OrdersPerEmployee");
-            OrdersPerEmployee();
+            //Console.WriteLine("\n--------------------------------\n****OrdersPerEmployee****\n");
+            //OrdersPerEmployee();
 
-            Console.WriteLine("--------------\n CustomersWithNamesLongerThan25Characters");
-            CustomersWithNamesLongerThan25Characters();
-
+            //Console.WriteLine("\n--------------------------------\n****CustomersWithNamesLongerThan25Characters****\n");
+            //CustomersWithNamesLongerThan25Characters();
+            Test();
             Console.ReadLine();
         }
 
@@ -39,9 +40,8 @@ namespace Applikation
             command.CommandText =
                 " SELECT products.ProductName, products.UnitPrice, products.UnitsInStock"
                 + " FROM Products products"
-                + " WHERE p.CategoryID"
-                + " = "
-                + " (SELECT categories.CategoryID"
+                + " WHERE products.CategoryID"
+                + " = (SELECT categories.CategoryID"
                 + " FROM Categories categories"
                 + " WHERE CategoryName ="
                 + " @CategoryName)";
@@ -49,14 +49,12 @@ namespace Applikation
             command.Parameters.AddWithValue("@CategoryName", CategoryName);
             sqlConnection.Open();
             SqlDataReader reader = command.ExecuteReader();
-            Console.Clear();
+
             while (reader.Read())
             {
-                Console.WriteLine("{0} \n {1} \n {2}\n ----- \n",
-                    reader.GetString(0),
-                    reader.GetValue(1),
-                    reader.GetValue(2));
+                Console.WriteLine("{0} \n {1} \n {2}\n\n", reader.GetString(0), reader.GetValue(1), reader.GetValue(2));
             }
+
             reader.Close();
             sqlConnection.Close();
         }
@@ -124,12 +122,13 @@ namespace Applikation
         #region UPPGIFT 4
         public static void OrdersPerEmployee()
         {
+            #region ADO.NET ***** UPPFATTADE FEL!!! *******
+            Console.WriteLine("\n\nADO.NET ***** UPPFATTADE FEL!!!\n");
             var sqlConnection = new SqlConnection(connectionString);
             SqlCommand cmd = sqlConnection.CreateCommand();
 
             cmd.CommandText =
-                "SELECT emp.FirstName +"
-                + " ' ' + "
+                "SELECT emp.FirstName + ' ' + "
                 + " emp.LastName, COUNT(orders.OrderID)"
                 + " FROM Employees emp"
                 + " INNER JOIN Orders orders "
@@ -145,6 +144,20 @@ namespace Applikation
             }
             reader.Close();
             sqlConnection.Close();
+            #endregion
+
+            #region ENTITY FRAMEWORK
+            Console.WriteLine("\n\nENTITY FRAMEWORK\n");
+            using (var db = new NorthwindDBContext())
+            {
+                var result = from north in db.Employees select north.FirstName + "\n" + north.Orders.Count + "\n";
+                foreach (var item in result.ToList())
+                {
+                    Console.WriteLine(item);
+                }
+            }
+            #endregion
+
         }
         #endregion
 
@@ -153,7 +166,7 @@ namespace Applikation
         {
             using (var db = new NorthwindDBContext())
             {
-                var queryResult = 
+                var queryResult =
                     db.Customers.Where
                     (x => x.CompanyName.Length > 25).Select
                     (x => x.CompanyName);
@@ -165,5 +178,35 @@ namespace Applikation
             }
         }
         #endregion
+
+        public static void Test()
+        {
+            using (var dbx = new NorthwindDBContext())
+            {
+                
+                // Order by ascending
+                var resultat = from obj in dbx.Products
+                               orderby obj.UnitPrice ascending
+                               select obj;
+                // -----------------------------------------------
+
+
+                // Höj priset med 8%
+                var result = from obj in dbx.Products select obj;
+
+                double dble = 1.08;
+                decimal d = Convert.ToDecimal(dble);
+
+                foreach (var Product in dbx.Products)
+                {
+                    Product.UnitPrice = Product.UnitPrice * d;
+                    Console.WriteLine(Product.UnitPrice);
+                }
+                // -----------------------
+
+                // Spara ändringar
+                dbx.SaveChanges();
+            }
+        }
     }
 }
